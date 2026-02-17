@@ -1,3 +1,16 @@
+// POST /api/users (create new worker/user)
+router.post('/users', async (req, res) => {
+  const { name, workerId, password, role } = req.body;
+  if (!name || !workerId || !password || !role) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+  try {
+    const created = await require('../models/User').create(req.body);
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ message: 'Error creating user', error: err?.message });
+  }
+});
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
