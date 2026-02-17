@@ -5,14 +5,27 @@ const bcrypt = require('bcryptjs');
 
 // POST /api/login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, workerId, username, id, adminId, password } = req.body;
+  const loginValue = workerId || email || username || id || adminId;
   try {
-    const user = await User.findOne({ email });
+    let user = null;
+    if (loginValue) {
+      user = await User.findOne({ workerId: loginValue });
+      if (!user) user = await User.findOne({ email: loginValue });
+      if (!user) user = await User.findOne({ adminId: loginValue });
+    }
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-    // Generate session token (simple example, use JWT in production)
-    res.json({ token: 'session-token', user });
+    // Return minimal user info
+    res.json({
+      token: 'session-token',
+      user: {
+        id: user.id,
+        role: user.role,
+        name: user.name
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
