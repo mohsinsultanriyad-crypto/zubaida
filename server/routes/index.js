@@ -19,3 +19,13 @@ router.use(reportRoutes);
 router.use(siteFeedRoutes);
 
 module.exports = router;
+
+// Global error logging endpoint (production-safe)
+router.post('/log-error', (req, res) => {
+	try {
+		console.error('[CLIENT ERROR]', req.body);
+	} catch (e) {
+		console.error('[CLIENT ERROR] (malformed body)', e);
+	}
+	res.status(204).end();
+});
