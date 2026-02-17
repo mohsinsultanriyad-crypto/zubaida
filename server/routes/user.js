@@ -1,5 +1,8 @@
 
-// ...existing code...
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
 // POST /api/users (create new worker/user)
 router.post('/users', async (req, res) => {
@@ -14,10 +17,6 @@ router.post('/users', async (req, res) => {
     res.status(500).json({ message: 'Error creating user', error: err?.message });
   }
 });
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 
 // POST /api/login (FASTEP two-tier logic)
 router.post('/login', async (req, res) => {
