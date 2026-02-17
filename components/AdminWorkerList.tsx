@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { apiPost } from '../api';
 import { User, Shift, Leave, AdvanceRequest } from '../types';
 import { Search, Download, FileText, Edit2, X, CheckCircle, Loader2, History, UserPlus, Zap, AlertTriangle, Trash2, AlertCircle, ShieldCheck, XCircle, Star } from 'lucide-react';
 import { DAYS_IN_MONTH, BASE_HOURS } from '../constants';
@@ -105,10 +106,9 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
     if (workerToDelete) { setWorkers(prev => prev.filter(w => w.id !== workerToDelete.id)); setWorkerToDelete(null); }
   };
 
-  const handleCreateWorker = (e: React.FormEvent) => {
+  const handleCreateWorker = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
+    const payload = {
       name: newWorker.name,
       workerId: newWorker.workerId,
       trade: newWorker.trade,
@@ -121,9 +121,17 @@ const AdminWorkerList: React.FC<AdminWorkerListProps> = ({ workers, setWorkers, 
       iqamaExpiry: newWorker.iqamaExpiry,
       passportExpiry: newWorker.passportExpiry
     };
-    setWorkers(prev => [...prev, newUser]);
-    setShowAddModal(false);
-    setNewWorker({ name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '', role: 'worker' });
+    console.log('Creating worker', payload);
+    try {
+      const created = await apiPost('/api/users', payload);
+      if (created && created._id) {
+        setWorkers(prev => [...prev, created]);
+      }
+      setShowAddModal(false);
+      setNewWorker({ name: '', workerId: '', trade: '', monthlySalary: '', phone: '', password: 'password123', iqamaExpiry: '', passportExpiry: '', role: 'worker' });
+    } catch (err) {
+      alert('Failed to create worker.');
+    }
   };
 
   return (
