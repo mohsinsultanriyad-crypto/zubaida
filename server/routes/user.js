@@ -14,6 +14,11 @@ router.post('/users', async (req, res) => {
       return res.status(400).json({ message: "workerId is required" });
     }
 
+    // Set default email if missing or empty
+    if (!req.body.email || typeof req.body.email !== 'string' || req.body.email.trim() === '') {
+      req.body.email = `${req.body.workerId}@fastep.local`.toLowerCase();
+    }
+
     // Ensure monthlySalary is set to 0 if missing or not a number
     if (req.body.monthlySalary === undefined || req.body.monthlySalary === null || isNaN(Number(req.body.monthlySalary))) {
       req.body.monthlySalary = 0;
