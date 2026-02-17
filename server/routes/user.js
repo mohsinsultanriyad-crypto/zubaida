@@ -4,36 +4,29 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// POST /api/users (create new worker/user) - safe validation and proper save
+// POST /api/users (debug-safe, full error logging)
 router.post('/users', async (req, res) => {
   try {
-    console.log("Incoming create user:", req.body);
+    console.log("==== CREATE USER REQUEST START ====");
+    console.log("Incoming body:", JSON.stringify(req.body, null, 2));
 
-    const { name, workerId, password, role } = req.body;
+    const user = await User.create(req.body);
 
-    if (!name || !workerId || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+    console.log("User saved successfully:", user);
+    console.log("==== CREATE USER SUCCESS ====");
 
-    const existing = await User.findOne({ workerId });
-    if (existing) {
-      return res.status(400).json({ error: "Worker ID already exists" });
-    }
-
-    const newUser = new User({
-      name,
-      workerId,
-      password, // plain for now (keep simple)
-      role: role || "worker"
-    });
-
-    await newUser.save();
-
-    res.status(201).json(newUser);
+    res.status(201).json(user);
 
   } catch (err) {
-    console.error("USER CREATE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("==== CREATE USER ERROR ====");
+    console.error(err);
+    console.error("==== ERROR END ====");
+
+    res.status(500).json({
+      message: "User creation failed",
+      error: err.message,
+      stack: err.stack
+    });
   }
 });
 
