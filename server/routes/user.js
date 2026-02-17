@@ -4,17 +4,36 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// POST /api/users (create new worker/user)
+// POST /api/users (create new worker/user) - safe validation and proper save
 router.post('/users', async (req, res) => {
-  const { name, workerId, password, role } = req.body;
-  if (!name || !workerId || !password || !role) {
-    return res.status(400).json({ message: 'Missing required fields' });
-  }
   try {
-    const created = await require('../models/User').create(req.body);
-    res.status(201).json(created);
+    console.log("Incoming create user:", req.body);
+
+    const { name, workerId, password, role } = req.body;
+
+    if (!name || !workerId || !password) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const existing = await User.findOne({ workerId });
+    if (existing) {
+      return res.status(400).json({ error: "Worker ID already exists" });
+    }
+
+    const newUser = new User({
+      name,
+      workerId,
+      password, // plain for now (keep simple)
+      role: role || "worker"
+    });
+
+    await newUser.save();
+
+    res.status(201).json(newUser);
+
   } catch (err) {
-    res.status(500).json({ message: 'Error creating user', error: err?.message });
+    console.error("USER CREATE ERROR:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
