@@ -4,11 +4,20 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// POST /api/users (debug-safe, full error logging)
+// POST /api/users (validate workerId, set monthlySalary default)
 router.post('/users', async (req, res) => {
   try {
     console.log("==== CREATE USER REQUEST START ====");
     console.log("Incoming body:", JSON.stringify(req.body, null, 2));
+
+    if (!req.body.workerId) {
+      return res.status(400).json({ message: "workerId is required" });
+    }
+
+    // Ensure monthlySalary is set to 0 if missing or not a number
+    if (req.body.monthlySalary === undefined || req.body.monthlySalary === null || isNaN(Number(req.body.monthlySalary))) {
+      req.body.monthlySalary = 0;
+    }
 
     const user = await User.create(req.body);
 
