@@ -1,20 +1,20 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Shift, Leave, SitePost, AdvanceRequest, Announcement } from './types';
-import { MOCK_WORKERS, MOCK_ADMIN } from './constants';
+
 import WorkerApp from './components/WorkerApp';
 import AdminApp from './components/AdminApp';
 import Login from './components/Login';
 import { Language } from './translations';
-import { db } from './db';
 import { Loader2, Cloud } from 'lucide-react';
+import { apiGet } from './api';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [posts, setPosts] = useState<SitePost[]>([]);
-  const [workers, setWorkers] = useState<User[]>(MOCK_WORKERS);
+  const [workers, setWorkers] = useState<User[]>([]);
   const [advanceRequests, setAdvanceRequests] = useState<AdvanceRequest[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -25,45 +25,22 @@ const App: React.FC = () => {
   useEffect(() => {
     const initData = async () => {
       try {
-        // Fetch all data from Cloud (MongoDB)
-        const [dbShifts, dbLeaves, dbPosts, dbWorkers, dbAdvances, dbAnnounce] = await Promise.all([
-          db.getAll<Shift>('shifts'),
-          db.getAll<Leave>('leaves'),
-          db.getAll<SitePost>('posts'),
-          db.getAll<User>('workers'),
-          db.getAll<AdvanceRequest>('advanceRequests'),
-          db.getAll<Announcement>('announcements'),
+        const [users, shifts, leaves, posts, advances, announcements] = await Promise.all([
+          apiGet('/api/users'),
+          apiGet('/api/attendance'),
+          apiGet('/api/leave'),
+          apiGet('/api/sitefeed'),
+          apiGet('/api/advance'),
+          apiGet('/api/reports/monthly'),
         ]);
-
-        if (dbShifts.length) setShifts(dbShifts);
-        if (dbLeaves.length) setLeaves(dbLeaves);
-        if (dbPosts.length) setPosts(dbPosts);
-        if (dbWorkers.length) setWorkers(dbWorkers);
-        if (dbAdvances.length) setAdvanceRequests(dbAdvances);
-        if (dbAnnounce.length) setAnnouncements(dbAnnounce);
-
-        // Language Persistence
-        const savedLang = localStorage.getItem('fw_lang');
-        if (savedLang) setLanguage(savedLang as Language);
-
-        // SESSION PERSISTENCE: Check if a user was previously logged in
-        const sessionUserId = localStorage.getItem('fw_session_id');
-        const sessionRole = localStorage.getItem('fw_session_role');
-
-        if (sessionUserId && sessionRole) {
-          if (sessionRole === 'admin' && sessionUserId === MOCK_ADMIN.email) {
-            setCurrentUser(MOCK_ADMIN);
-          } else {
-            // Check in the freshly fetched MongoDB workers
-            const allWorkers = dbWorkers.length > 0 ? dbWorkers : MOCK_WORKERS;
-            const foundUser = allWorkers.find(w => w.id === sessionUserId || w.workerId === sessionUserId);
-            if (foundUser) {
-              setCurrentUser(foundUser);
-            }
-          }
-        }
+        setWorkers(users || []);
+        setShifts((shifts && shifts.attendance) || []);
+        setLeaves((leaves && leaves.leaves) || []);
+        setPosts(posts || []);
+        setAdvanceRequests((advances && advances.advances) || []);
+        setAnnouncements((announcements && announcements.announcements) || []);
       } catch (e) {
-        console.error("Cloud fetch failed", e);
+        console.error('API fetch failed', e);
       } finally {
         setIsLoaded(true);
       }
@@ -126,23 +103,19 @@ const App: React.FC = () => {
     });
   };
 
-  const handleLogin = (user: User) => {
-    // Save minimal session info to localStorage for refresh persistence
-    localStorage.setItem('fw_session_id', user.role === 'admin' ? (user.email || '') : (user.workerId || user.id));
-    localStorage.setItem('fw_session_role', user.role);
+  const handleLogin = (user: User, token?: string) => {
+    // Only store session token and minimal info
+    if (token) localStorage.setItem('fw_session_token', token);
     setCurrentUser(user);
   };
 
   const handleLogout = () => {
-    // Clear session info
-    localStorage.removeItem('fw_session_id');
-    localStorage.removeItem('fw_session_role');
+    localStorage.removeItem('fw_session_token');
     setCurrentUser(null);
   };
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
-    localStorage.setItem('fw_lang', lang);
   };
 
   if (!isLoaded) {

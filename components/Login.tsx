@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { User } from '../types';
-import { MOCK_ADMIN, APP_NAME } from '../constants';
+import { APP_NAME } from '../constants';
+import { apiPost, API_BASE } from '../api';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -14,23 +15,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, workers }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isAdmin) {
-      // Check admin credentials from constants (User requested FSA101 / password123)
-      if (userId === MOCK_ADMIN.email && password === (MOCK_ADMIN.password || 'password123')) {
-        onLogin(MOCK_ADMIN);
+    setError('');
+    try {
+      console.log('API_BASE', API_BASE);
+      const res = await apiPost('/api/login', {
+        email: isAdmin ? userId : undefined,
+        workerId: !isAdmin ? userId : undefined,
+        password,
+        role: isAdmin ? 'admin' : 'worker',
+      });
+      if (res && res.token && res.user) {
+        onLogin(res.user, res.token);
       } else {
-        setError('Invalid Admin credentials');
+        setError('Invalid credentials');
       }
-    } else {
-      // Check worker credentials from state (including newly created ones)
-      const worker = workers.find(w => w.workerId === userId);
-      if (worker && password === (worker.password || 'password123')) {
-        onLogin(worker);
-      } else {
-        setError('Invalid Worker ID or Password');
-      }
+    } catch (err: any) {
+      setError('Invalid credentials');
     }
   };
 
