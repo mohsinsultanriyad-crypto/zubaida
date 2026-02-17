@@ -1,3 +1,6 @@
+
+// ...existing code...
+
 // POST /api/users (create new worker/user)
 router.post('/users', async (req, res) => {
   const { name, workerId, password, role } = req.body;
