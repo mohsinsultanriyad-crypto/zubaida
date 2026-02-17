@@ -1,3 +1,5 @@
+// Safe global shim for legacy db reference (prevents ReferenceError, no-op)
+globalThis.db = globalThis.db || {};
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
