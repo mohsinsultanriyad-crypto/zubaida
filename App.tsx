@@ -48,12 +48,10 @@ const App: React.FC = () => {
     initData();
   }, []);
 
-  // 2. State-to-MongoDB Sync Wrappers
+  // 2. State update wrappers (no local db sync)
   const updateShifts: React.Dispatch<React.SetStateAction<Shift[]>> = (val) => {
     setShifts(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
-      setIsSyncing(true);
-      db.saveBatch('shifts', next).finally(() => setIsSyncing(false));
       return next;
     });
   };
@@ -61,8 +59,6 @@ const App: React.FC = () => {
   const updateLeaves: React.Dispatch<React.SetStateAction<Leave[]>> = (val) => {
     setLeaves(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
-      setIsSyncing(true);
-      db.saveBatch('leaves', next).finally(() => setIsSyncing(false));
       return next;
     });
   };
@@ -70,8 +66,6 @@ const App: React.FC = () => {
   const updateWorkers: React.Dispatch<React.SetStateAction<User[]>> = (val) => {
     setWorkers(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
-      setIsSyncing(true);
-      db.saveBatch('workers', next).finally(() => setIsSyncing(false));
       return next;
     });
   };
@@ -79,8 +73,6 @@ const App: React.FC = () => {
   const updatePosts: React.Dispatch<React.SetStateAction<SitePost[]>> = (val) => {
     setPosts(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
-      setIsSyncing(true);
-      db.saveBatch('posts', next).finally(() => setIsSyncing(false));
       return next;
     });
   };
@@ -88,8 +80,6 @@ const App: React.FC = () => {
   const updateAdvanceRequests: React.Dispatch<React.SetStateAction<AdvanceRequest[]>> = (val) => {
     setAdvanceRequests(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
-      setIsSyncing(true);
-      db.saveBatch('advanceRequests', next).finally(() => setIsSyncing(false));
       return next;
     });
   };
@@ -97,8 +87,6 @@ const App: React.FC = () => {
   const updateAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>> = (val) => {
     setAnnouncements(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
-      setIsSyncing(true);
-      db.saveBatch('announcements', next).finally(() => setIsSyncing(false));
       return next;
     });
   };
